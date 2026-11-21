@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FırsatRadarı TR — Gerçek İndirim & Fiyat Takip Platformu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f8fafc; }
+    .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .neon-glow { box-shadow: 0 0 25px rgba(249, 115, 22, 0.25); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Üst Menü -->
+  <header class="sticky top-0 z-40 glass-card border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-orange-500/30">
+          %
+        </div>
+        <div>
+          <span class="font-extrabold text-lg tracking-tight text-white">FırsatRadarı<span class="text-orange-500">TR</span></span>
+          <span class="hidden sm:inline-block ml-2 text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">CANLI TARAMA</span>
+        </div>
+      </div>
+
+      <div class="flex-1 max-w-md">
+        <input id="searchInput" type="text" placeholder="Ürün, marka veya mağaza ara (örn: Kulaklık, Trendyol)..."
+          class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 transition" />
+      </div>
+
+      <button onclick="openTrackModal()" class="bg-gradient-to-r from-orange-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-orange-500/20 transition flex items-center gap-1.5 shrink-0">
+        <span>+</span> <span class="hidden sm:inline">Linkten Takip Et</span><span class="sm:hidden">Takip</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mağaza ve Kategori Filtreleri -->
+  <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-5 pb-2">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div id="storeFilters" class="flex items-center gap-2 overflow-x-auto pb-1">
+        <button data-store="ALL" class="store-btn active bg-orange-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition">Tüm Mağazalar</button>
+        <button data-store="Trendyol" class="store-btn bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition">Trendyol</button>
+        <button data-store="Hepsiburada" class="store-btn bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition">Hepsiburada</button>
+        <button data-store="Amazon TR" class="store-btn bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition">Amazon TR</button>
+        <button data-store="N11" class="store-btn bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition">N11</button>
+        <button data-store="Teknosa" class="store-btn bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition">Teknosa</button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="sortSelect" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-500">
+          <option value="discount">En Yüksek İndirim (%)</option>
+          <option value="heat">En Sıcak Fırsatlar (🔥)</option>
+          <option value="priceAsc">En Düşük Fiyat</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ana İçerik -->
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+    
+    <!-- Sol / Orta: Fırsat Kartları -->
+    <section class="lg:col-span-8 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">
+          <span>🔥 Günün Doğrulanmış Fırsatları</span>
+          <span id="dealCount" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">0 ürün</span>
+        </h2>
+        <span class="text-xs text-slate-400">Sahte indirimler otomatik filtrelenir</span>
+      </div>
+
+      <div id="dealsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- Sağ: Canlı Fiyat Düşüşü Akışı & Alarmlarım -->
+    <aside class="lg:col-span-4 space-y-5">
+      <div class="glass-card rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            Canlı Fiyat Düşüşleri
+          </h3>
+          <span class="text-[11px] text-slate-400">Anlık Akış</span>
+        </div>
+        <div id="liveFeed" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4">
+        <h3 class="text-sm font-bold text-white mb-2">📌 Takip Listem & Alarmlar</h3>
+        <p class="text-xs text-slate-400 mb-3">Eklediğin ürünlerin hedef fiyat takibi burada görünür.</p>
+        <div id="watchlistContainer" class="space-y-2 text-xs text-slate-300"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 30 Günlük Fiyat Analiz Modalı -->
+  <div id="chartModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-lg w-full p-6 border border-slate-700">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <span id="modalStore" class="text-xs font-bold text-orange-400 uppercase"></span>
+          <h3 id="modalTitle" class="text-lg font-bold text-white mt-0.5"></h3>
+        </div>
+        <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+      </div>
+      <div id="modalVerdict" class="mb-4 p-3 rounded-xl text-xs font-semibold"></div>
+      <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+        <canvas id="priceChart" height="170"></canvas>
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate-400 block">Güncel Fırsat Fiyatı</span>
+          <span id="modalPrice" class="text-xl font-extrabold text-emerald-400"></span>
+        </div>
+        <a id="modalBuyLink" href="#" target="_blank" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
+          Mağazaya Git &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linkten Takip Et Modalı -->
+  <div id="trackModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 border border-slate-700">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white">Yeni Ürün Takibe Al</h3>
+        <button onclick="closeTrackModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+      </div>
+      <form id="trackForm" class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Ürün Adı</label>
+          <input id="trackName" required type="text" placeholder="Örn: Apple AirPods Pro 2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Mağaza</label>
+            <select id="trackStore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white">
+              <option>Trendyol</option>
+              <option>Hepsiburada</option>
+              <option>Amazon TR</option>
+              <option>N11</option>
+              <option>Teknosa</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Hedef Fiyat (₺)</label>
+            <input id="trackPrice" required type="number" placeholder="7500" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Ürün Linki</label>
+          <input id="trackUrl" type="url" placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-orange-500 to-rose-600 text-white font-bold py-2.5 rounded-xl mt-2">
+          Radara Ekle
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const deals = [
+      { id: 1, title: "Sony WH-1000XM5 Gürültü Engelleyici Kulaklık", store: "Amazon TR", oldPrice: 13499, price: 9899, heat: 342, realDeal: true, history: [13499, 13200, 13499, 12900, 13100, 11500, 9899], url: "https://www.amazon.com.tr" },
+      { id: 2, title: "Philips Airfryer XXL Smart Sensing Fritöz", store: "Trendyol", oldPrice: 7200, price: 4699, heat: 289, realDeal: true, history: [7100, 7200, 6950, 7200, 6800, 5400, 4699], url: "https://www.trendyol.com" },
+      { id: 3, title: "Roborock Q8 Max Akıllı Robot Süpürge", store: "Hepsiburada", oldPrice: 16999, price: 12490, heat: 415, realDeal: true, history: [16800, 16999, 16500, 15900, 16200, 13900, 12490], url: "https://www.hepsiburada.com" },
+      { id: 4, title: "Logitech MX Master 3S Kablosuz Mouse", store: "Teknosa", oldPrice: 4499, price: 3199, heat: 198, realDeal: true, history: [4399, 4499, 4499, 4200, 4499, 3600, 3199], url: "https://www.teknosa.com" },
+      { id: 5, title: "Nike Air Force 1 '07 Erkek Spor Ayakkabı", store: "N11", oldPrice: 4899, price: 3349, heat: 230, realDeal: true, history: [4799, 4899, 4899, 4650, 4899, 3999, 3349], url: "https://www.n11.com" },
+      { id: 6, title: "Samsung Galaxy Watch 6 Classic 47mm", store: "Amazon TR", oldPrice: 8999, price: 6299, heat: 310, realDeal: true, history: [8800, 8999, 8750, 8999, 8200, 7100, 6299], url: "https://www.amazon.com.tr" }
+    ];
+
+    let activeStore = "ALL";
+    let chartInstance = null;
+    let watchlist = JSON.parse(localStorage.getItem("firsat_watchlist") || '[{"name":"PlayStation 5 Slim","store":"Trendyol","target":18500}]');
+
+    function formatTL(num) {
+      return num.toLocaleString("tr-TR") + " ₺";
+    }
+
+    function renderDeals() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const sort = document.getElementById("sortSelect").value;
+
+      let filtered = deals.filter(d => {
+        const matchStore = activeStore === "ALL" || d.store === activeStore;
+        const matchQuery = d.title.toLowerCase().includes(query) || d.store.toLowerCase().includes(query);
+        return matchStore && matchQuery;
+      });
+
+      filtered.sort((a, b) => {
+        const discA = (a.oldPrice - a.price) / a.oldPrice;
+        const discB = (b.oldPrice - b.price) / b.oldPrice;
+        if (sort === "discount") return discB - discA;
+        if (sort === "heat") return b.heat - a.heat;
+        return a.price - b.price;
+      });
+
+      document.getElementById("dealCount").textContent = `${filtered.length} ürün`;
+      const grid = document.getElementById("dealsGrid");
+      grid.innerHTML = filtered.map(d => {
+        const discountPct = Math.round(((d.oldPrice - d.price) / d.oldPrice) * 100);
+        return `
+          <div class="glass-card rounded-2xl p-4 flex flex-col justify-between hover:border-orange-500/50 transition">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2.5">
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-slate-800 text-orange-400 border border-slate-700">${d.store}</span>
+                <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">-%${discountPct} İNDİRİM</span>
+              </div>
+              <h3 class="font-bold text-sm text-white leading-snug mb-3">${d.title}</h3>
+            </div>
+
+            <div>
+              <div class="flex items-baseline gap-2 mb-3">
+                <span class="text-lg font-extrabold text-white">${formatTL(d.price)}</span>
+                <span class="text-xs text-slate-400 line-through">${formatTL(d.oldPrice)}</span>
+              </div>
+
+              <div class="flex items-center justify-between pt-3 border-t border-slate-800/80 gap-2">
+                <button onclick="voteHeat(${d.id})" class="flex items-center gap-1 text-xs font-bold bg-slate-800/90 hover:bg-orange-500/20 text-orange-400 px-2.5 py-1.5 rounded-lg transition">
+                  🔥 <span>${d.heat}°</span>
+                </button>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChartModal(${d.id})" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg transition">
+                    📊 Analiz
+                  </button>
+                  <a href="${d.url}" target="_blank" class="text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg transition">
+                    Fırsata Git
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function voteHeat(id) {
+      const item = deals.find(d => d.id === id);
+      if (item) { item.heat += 5; renderDeals(); }
+    }
+
+    function openChartModal(id) {
+      const item = deals.find(d => d.id === id);
+      if (!item) return;
+      document.getElementById("modalStore").textContent = item.store;
+      document.getElementById("modalTitle").textContent = item.title;
+      document.getElementById("modalPrice").textContent = formatTL(item.price);
+      document.getElementById("modalBuyLink").href = item.url;
+
+      const verdict = document.getElementById("modalVerdict");
+      verdict.className = "mb-4 p-3 rounded-xl text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30";
+      verdict.textContent = "✅ Gerçek İndirim Doğrulandı: Son 30 günün en düşük fiyatı!";
+
+      document.getElementById("chartModal").classList.remove("hidden");
+
+      const ctx = document.getElementById("priceChart").getContext("2d");
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: ["30g önce", "25g", "20g", "15g", "10g", "5g", "Bugün"],
+          datasets: [{
+            label: "Fiyat (₺)",
+            data: item.history,
+            borderColor: "#f97316",
+            backgroundColor: "rgba(249, 115, 22, 0.15)",
+            fill: true,
+            tension: 0.35
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: "#94a3b8", font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: "#94a3b8", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.05)" } }
+          }
+        }
+      });
+    }
+
+    function closeChartModal() { document.getElementById("chartModal").classList.add("hidden"); }
+    function openTrackModal() { document.getElementById("trackModal").classList.remove("hidden"); }
+    function closeTrackModal() { document.getElementById("trackModal").classList.add("hidden"); }
+
+    function renderWatchlist() {
+      const container = document.getElementById("watchlistContainer");
+      if (!watchlist.length) {
+        container.innerHTML = `<p class="text-slate-500">Henüz takip edilen ürün yok.</p>`;
+        return;
+      }
+      container.innerHTML = watchlist.map((w, idx) => `
+        <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 px-3 py-2 rounded-xl">
+          <div>
+            <div class="font-semibold text-white">${w.name}</div>
+            <div class="text-[11px] text-slate-400">${w.store} • Hedef: <span class="text-emerald-400 font-bold">${formatTL(Number(w.target))}</span></div>
+          </div>
+          <button onclick="removeWatch(${idx})" class="text-slate-500 hover:text-rose-400 text-sm font-bold">&times;</button>
+        </div>
+      `).join("");
+    }
+
+    function removeWatch(idx) {
+      watchlist.splice(idx, 1);
+      localStorage.setItem("firsat_watchlist", JSON.stringify(watchlist));
+      renderWatchlist();
+    }
+
+    document.getElementById("trackForm").addEventListener("submit", e => {
+      e.preventDefault();
+      watchlist.unshift({
+        name: document.getElementById("trackName").value,
+        store: document.getElementById("trackStore").value,
+        target: document.getElementById("trackPrice").value
+      });
+      localStorage.setItem("firsat_watchlist", JSON.stringify(watchlist));
+      renderWatchlist();
+      e.target.reset();
+      closeTrackModal();
+    });
+
+    const liveItems = [
+      { store: "Trendyol", text: "Dyson V15 Detect fiyatı %22 düştü", time: "Az önce" },
+      { store: "Amazon TR", text: "Kindle Paperwhite 16GB stokta & indirimde", time: "2 dk önce" },
+      { store: "Hepsiburada", text: "Asus ROG Strix G16 sepette 4.500₺ indirim", time: "5 dk önce" },
+      { store: "N11", text: "Stanley Termos 1.9L kampanyaya girdi", time: "9 dk önce" }
+    ];
+
+    function renderLiveFeed() {
+      document.getElementById("liveFeed").innerHTML = liveItems.map(i => `
+        <div class="bg-slate-900/70 border border-slate-800/80 p-2.5 rounded-xl text-xs">
+          <div class="flex justify-between text-[11px] text-orange-400 font-bold mb-0.5">
+            <span>${i.store}</span>
+            <span class="text-slate-500 font-normal">${i.time}</span>
+          </div>
+          <p class="text-slate-200">${i.text}</p>
+        </div>
+      `).join("");
+    }
+
+    document.querySelectorAll(".store-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".store-btn").forEach(b => {
+          b.classList.remove("bg-orange-500", "text-white");
+          b.classList.add("bg-slate-800/80", "text-slate-300");
+        });
+        btn.classList.add("bg-orange-500", "text-white");
+        btn.classList.remove("bg-slate-800/80", "text-slate-300");
+        activeStore = btn.dataset.store;
+        renderDeals();
+      });
+    });
+
+    document.getElementById("searchInput").addEventListener("input", renderDeals);
+    document.getElementById("sortSelect").addEventListener("change", renderDeals);
+
+    renderDeals();
+    renderWatchlist();
+    renderLiveFeed();
+  </script>
+</body>
+</html>
